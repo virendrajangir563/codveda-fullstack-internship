@@ -1,170 +1,206 @@
+
 import { useState } from "react";
 import api from "../services/api";
 
 function TaskCard({ task, onTaskDeleted, onTaskUpdated }) {
-  const [isEditing, setIsEditing] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
 
-  const [formData, setFormData] = useState({
-    title: task.title,
-    description: task.description,
-    status: task.status,
-    priority: task.priority,
-  });
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-
-    setFormData({
-      ...formData,
-      [name]: value,
+    const [formData, setFormData] = useState({
+        title: task.title,
+        description: task.description,
+        status: task.status,
+        priority: task.priority,
     });
-  };
 
-  const handleUpdate = async (e) => {
-    e.preventDefault();
+    const handleChange = (e) => {
+        const { name, value } = e.target;
 
-    try {
-      const token = localStorage.getItem("token");
+        setFormData({
+            ...formData,
+            [name]: value,
+        });
+    };
 
-      const response = await api.put(
-        `/tasks/${task._id}`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+    const handleUpdate = async (e) => {
+        e.preventDefault();
+
+        try {
+            const token = localStorage.getItem("token");
+
+            const response = await api.put(
+                `/tasks/${task._id}`,
+                formData,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            onTaskUpdated(response.data.task);
+
+            setIsEditing(false);
+
+        } catch (error) {
+            alert(
+                error.response?.data?.message ||
+                "Failed to update task"
+            );
         }
-      );
+    };
 
-      onTaskUpdated(response.data.task);
+    const handleDelete = async () => {
+        const confirmDelete = window.confirm(
+            "Are you sure you want to delete this task?"
+        );
 
-      setIsEditing(false);
+        if (!confirmDelete) {
+            return;
+        }
 
-    } catch (error) {
-      alert(
-        error.response?.data?.message ||
-        "Failed to update task"
-      );
+        try {
+            const token = localStorage.getItem("token");
+
+            await api.delete(`/tasks/${task._id}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            onTaskDeleted(task._id);
+
+        } catch (error) {
+            alert(
+                error.response?.data?.message ||
+                "Failed to delete task"
+            );
+        }
+    };
+
+    /* Edit Mode */
+    if (isEditing) {
+        return (
+            <div className="task-card">
+
+                <form onSubmit={handleUpdate}>
+
+                    <input
+                        className="task-input"
+                        type="text"
+                        name="title"
+                        value={formData.title}
+                        onChange={handleChange}
+                    />
+
+                    <textarea
+                        className="task-textarea"
+                        name="description"
+                        value={formData.description}
+                        onChange={handleChange}
+                    />
+
+                    <select
+                        className="task-select"
+                        name="status"
+                        value={formData.status}
+                        onChange={handleChange}
+                    >
+                        <option value="pending">
+                            Pending
+                        </option>
+
+                        <option value="in-progress">
+                            In Progress
+                        </option>
+
+                        <option value="completed">
+                            Completed
+                        </option>
+                    </select>
+
+                    <select
+                        className="task-select"
+                        name="priority"
+                        value={formData.priority}
+                        onChange={handleChange}
+                    >
+                        <option value="low">
+                            Low
+                        </option>
+
+                        <option value="medium">
+                            Medium
+                        </option>
+
+                        <option value="high">
+                            High
+                        </option>
+                    </select>
+
+                    <button
+                        className="save-btn"
+                        type="submit"
+                    >
+                        Save
+                    </button>
+
+                    <button
+                        className="cancel-btn"
+                        type="button"
+                        onClick={() => setIsEditing(false)}
+                    >
+                        Cancel
+                    </button>
+
+                </form>
+
+            </div>
+        );
     }
-  };
 
-  const handleDelete = async () => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this task?"
-    );
-
-    if (!confirmDelete) {
-      return;
-    }
-
-    try {
-      const token = localStorage.getItem("token");
-
-      await api.delete(`/tasks/${task._id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      onTaskDeleted(task._id);
-
-    } catch (error) {
-      alert(
-        error.response?.data?.message ||
-        "Failed to delete task"
-      );
-    }
-  };
-
-  if (isEditing) {
+    /* Normal Mode */
     return (
-      <div>
-        <form onSubmit={handleUpdate}>
+        <div className="task-card">
 
-          <input
-            type="text"
-            name="title"
-            value={formData.title}
-            onChange={handleChange}
-          />
+            <h3>{task.title}</h3>
 
-          <br />
-          <br />
+            <p className="task-description">
+                {task.description}
+            </p>
 
-          <textarea
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-          />
+            <div className="task-info">
 
-          <br />
-          <br />
+                <span>
+                    Status: <strong>{task.status}</strong>
+                </span>
 
-          <select
-            name="status"
-            value={formData.status}
-            onChange={handleChange}
-          >
-            <option value="pending">Pending</option>
-            <option value="in-progress">In Progress</option>
-            <option value="completed">Completed</option>
-          </select>
+                <span>
+                    Priority: <strong>{task.priority}</strong>
+                </span>
 
-          <br />
-          <br />
+            </div>
 
-          <select
-            name="priority"
-            value={formData.priority}
-            onChange={handleChange}
-          >
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-          </select>
+            <div className="task-actions">
 
-          <br />
-          <br />
+                <button
+                    className="edit-btn"
+                    onClick={() => setIsEditing(true)}
+                >
+                    Edit
+                </button>
 
-          <button type="submit">
-            Save
-          </button>
+                <button
+                    className="delete-btn"
+                    onClick={handleDelete}
+                >
+                    Delete
+                </button>
 
-          <button
-            type="button"
-            onClick={() => setIsEditing(false)}
-          >
-            Cancel
-          </button>
+            </div>
 
-        </form>
-
-        <hr />
-      </div>
+        </div>
     );
-  }
-
-  return (
-    <div>
-      <h3>{task.title}</h3>
-
-      <p>{task.description}</p>
-
-      <p>Status: {task.status}</p>
-
-      <p>Priority: {task.priority}</p>
-
-      <button onClick={() => setIsEditing(true)}>
-        Edit
-      </button>
-
-      <button onClick={handleDelete}>
-        Delete
-      </button>
-
-      <hr />
-    </div>
-  );
 }
 
 export default TaskCard;
+
