@@ -199,3 +199,12 @@ codveda-fullstack-internship/
 │
 ├── .gitignore
 └── README.md
+
+
+## 🌐 Live Demo
+
+### Frontend
+https://codveda-fullstack-internship-one.vercel.app/
+
+### Backend API
+https://codveda-fullstack-internship-j933.onrender.com/
